@@ -16,17 +16,17 @@ initial_SNR = snr(clean,noise);
 %% Parameters
 
 % Rough range - tid 19.18
-% mu_values_LMS  = 0.1:0.1:1;
-% mu_values_NLMS = 0.1:0.1:1;
-% filterOrders = 1:20;
-% lambda_values  = 0.1:0.1:1;
+% mu_values_LMS  = 0.01:0.05:1;
+% mu_values_NLMS = 0.01:0.05:1;
+% filterOrders = 1:25;
+% lambda_values  = 0.01:0.05:1;
 % enabled = 0;
 
 % Fine range - tid 19.18
 mu_values_LMS  = 0.05:0.01:0.15;
-mu_values_NLMS = 0.5:0.01:0.7;
-filterOrders = 1:20;
-lambda_values  = 0.98:0.002:1.0;   %0.8:0.01:1;
+mu_values_NLMS = 0.4:0.01:0.7;
+filterOrders = 1:25;
+lambda_values  = 0.95:0.002:1.0;   %0.8:0.01:1;
 enabled = 1;
 
 totalIterations = length(filterOrders)*(length(mu_values_LMS) + length(mu_values_NLMS)) + ...
@@ -58,7 +58,7 @@ parfor idx = 1:totalIterations
             filterName = 'NLMS';
         end
         if all(isfinite(y))
-            snr_val = snr(clean, clean - (primary - y));
+            snr_val = snr(clean, e);
             local_result = struct('type', filterName, 'M', M, 'param', mu, 'snr', snr_val, 'mse', mse);
         end
     else
@@ -68,7 +68,7 @@ parfor idx = 1:totalIterations
         M = filterOrders(M_idx); lambda_val = lambda_values(lambda_idx);
         [y, e, mse] = rls_filter(noise, primary, M, lambda_val);
         if all(isfinite(y))
-            snr_val = snr(clean, clean - (primary - y));
+            snr_val = snr(clean, e);
             local_result = struct('type', 'RLS', 'M', M, 'param', lambda_val, 'snr', snr_val, 'mse', mse);
         end
     end
@@ -183,18 +183,23 @@ bestLambda_RLS = optLambda_RLS(idx_RLS);
 %% Display Results
 fprintf('\n--- Absolute Best Parameters ---\n');
 
+fprintf('Initial SNR: %.4f dB\n', initial_SNR);  % Print initial SNR
+
 fprintf('\nLMS:\n');
 fprintf('Best SNR: %.4f dB\n', maxSNR_LMS);
+fprintf('SNR Improvment: %.4f dB\n', maxSNR_LMS-initial_SNR);
 fprintf('Filter Order: %d\n', bestFilterOrder_LMS);
 fprintf('Optimal mu: %.4f\n', bestMu_LMS);
 
 fprintf('\nNLMS:\n');
 fprintf('Best SNR: %.4f dB\n', maxSNR_NLMS);
+fprintf('SNR Improvment: %.4f dB\n', maxSNR_NLMS-initial_SNR);
 fprintf('Filter Order: %d\n', bestFilterOrder_NLMS);
 fprintf('Optimal mu: %.4f\n', bestMu_NLMS);
 
 fprintf('\nRLS:\n');
 fprintf('Best SNR: %.4f dB\n', maxSNR_RLS);
+fprintf('SNR Improvment: %.4f dB\n', maxSNR_RLS-initial_SNR);
 fprintf('Filter Order: %d\n', bestFilterOrder_RLS);
 fprintf('Optimal lambda: %.4f\n', bestLambda_RLS);
 

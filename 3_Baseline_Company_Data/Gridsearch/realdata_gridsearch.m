@@ -13,7 +13,7 @@ bestParams_NLMS = [];
 
 % Define NLMS parameter search space
 mus = 1e-3 * (2.^(0:9));  % Step sizes for NLMS
-ps = 1:10;  % Filter orders
+ps = 1:100;  % Filter orders
 
 for folder = folders'
     if folder.isdir
@@ -105,6 +105,13 @@ for folder = folders'
         end
     end
 end
+
+%%
+% === Output filtered audio ===
+e = e / max(abs(e));  % Normalize
+outputFile = "Filtered_NLMS.wav";
+audiowrite(outputFile, e, Fs);
+fprintf("Filtered audio saved: %s\n", outputFile);
 
 
 

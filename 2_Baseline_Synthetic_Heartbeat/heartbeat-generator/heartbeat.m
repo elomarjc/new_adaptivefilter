@@ -9,7 +9,7 @@
 clear;
 
 %% Simulation settings
-fs = 44100;         % Sample rate
+fs = 8000;         % Sample rate
 numBeats = 25;      % number of heartbeats to simulate
 tempoBpm = 100;     % bpm
 

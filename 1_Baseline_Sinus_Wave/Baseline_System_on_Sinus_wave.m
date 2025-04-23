@@ -77,6 +77,7 @@ for n = 1:N
     gain_k = PI / (lambda + u_vect' * PI); % Gain
     w_RLS = w_RLS + gain_k * e_RLS(n); % Update weights
     P = P / lambda - gain_k * (u_vect' * P) / lambda; % Update P matrix
+    
     mse_RLS(n) = norm(mse_RLS(n)+(abs(e_RLS(n))^2));
 end
 

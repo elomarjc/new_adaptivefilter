@@ -286,6 +286,11 @@ xlim([0 minLength]);
 tightfig();
 saveas(gcf, fullfile(foldername, 'PowerICA Separation Results - hopital ambient.pdf'));
 
+
+% Calculate initial SNR
+SNR_seperate_1 = 10 * log10(sum(x.^2) / sum((x - d).^2)); 
+SNR_seperate_2 = 10 * log10(sum(x.^2) / sum((x - d).^2));  
+
 %% Save Figure trimmed
 function tightfig()
     set(gcf, 'Units', 'Inches');

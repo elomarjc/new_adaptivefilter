@@ -3,40 +3,40 @@ clear;
 close all;
 
 %% Define the path for the data
-[u, fs] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\3_Baseline_Company_Data\Data_ANC\Experiment_Data\Artifacts\NHS\1\primary.wav");   %noise + clean signal
-[d, ~] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\3_Baseline_Company_Data\Data_ANC\Experiment_Data\Artifacts\NHS\1\secondary.wav");
-[x, ~] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\3_Baseline_Company_Data\Data_ANC\Experiment_Data\Artifacts\NHS\1\ZCH0048.wav");
+[u, fs] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\3_Baseline_Company_Data\Data_ANC\Experiment_Data\Hospital Ambient Noises\NLS\1\primary.wav");   %noise + clean signal
+[d, ~] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\3_Baseline_Company_Data\Data_ANC\Experiment_Data\Hospital Ambient Noises\NLS\1\secondary.wav");
+[x, ~] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\3_Baseline_Company_Data\Data_ANC\Experiment_Data\Hospital Ambient Noises\NLS\1\steth_20190608_11_58_04_ok.wav");
 
 % Amplify for visibility, used for ambulance and lung sounds
- % u = u*3;
- % d = d*3;
- % x = x*3;
+ u = u*3;
+ d = d*3;
+ x = x*3;
 
 % Name of audio type to have in figures and folder name
-suffix = 'Artifacts';
+suffix = 'Lung Hospital Ambient Noises';
 
-% Define the duration of the segment to extract (x seconds)
-segment_duration = 6;  % in seconds
-segment_samples = segment_duration * fs;  % Convert duration to sample count
-
-% Ensure that the recordings are long enough and extract the first x seconds from each
-if length(u) >= segment_samples
-    u = u(1:segment_samples);  % Extract first x seconds
-else
-    error('Primary signal is shorter than x seconds.');
-end
-
-if length(d) >= segment_samples
-    d = d(1:segment_samples);  % Extract first x seconds
-else
-    error('Secondary signal is shorter than 6 seconds.');
-end
-
-if length(x) >= segment_samples
-    x = x(1:segment_samples);  % Extract first x seconds
-else
-    error('Artifact signal is shorter than x seconds.');
-end
+% % Define the duration of the segment to extract (6 seconds)
+% segment_duration = 11;  % in seconds
+% segment_samples = segment_duration * fs;  % Convert duration to sample count
+% 
+% % Ensure that the recordings are long enough and extract the first 6 seconds from each
+% if length(u) >= segment_samples
+%     u = u(1:segment_samples);  % Extract first 6 seconds
+% else
+%     error('Primary signal is shorter than 6 seconds.');
+% end
+% 
+% if length(d) >= segment_samples
+%     d = d(1:segment_samples);  % Extract first 6 seconds
+% else
+%     error('Secondary signal is shorter than 6 seconds.');
+% end
+% 
+% if length(x) >= segment_samples
+%     x = x(1:segment_samples);  % Extract first 6 seconds
+% else
+%     error('Artifact signal is shorter than 6 seconds.');
+% end
 
 % Ensure all signals are the same size by trimming to the smallest length
 min_len = min([length(u), length(d), length(x)]);
@@ -439,7 +439,7 @@ s_filtered_NLMS_db = 10 * log10(s_filtered_NLMS + eps);
 s_filtered_RLS_db = 10 * log10(s_filtered_RLS + eps);
 
 % Find global min and max for color axis
-cmin = -60;
+cmin = -50;
 cmax = max([max(s_x_db(:)), max(s_u_db(:)), max(s_filtered_LMS_db(:)), max(s_filtered_NLMS_db(:)), max(s_filtered_RLS_db(:))]);
 
 % Plot Mel spectrograms in a single figure (5 subplots)
@@ -455,8 +455,8 @@ title('Clean Signal');
 colorbar;
 colormap jet;
 caxis([cmin cmax]); % Set color axis
-ylim([0 1000]);
-xlim([0 5]); % 5 for heart, 10 for lung
+ylim([0 2000]);
+%xlim([0 10]); % 5 for heart, 10 for lung
 
 % Primary signal (heart+noise)
 subplot(5,1,2);
@@ -468,8 +468,8 @@ title('Primary Signal (Clean + Noise)');
 colorbar;
 colormap jet;
 caxis([cmin cmax]); % Set color axis
-ylim([0 1000]);
-xlim([0 5]);
+ylim([0 2000]);
+%xlim([0 10]);
 
 % Filtered LMS signal
 subplot(5,1,3); 
@@ -481,8 +481,8 @@ title('Filtered LMS Signal');
 colorbar;
 colormap jet;
 caxis([cmin cmax]); % Set color axis
-ylim([0 1000]);
-xlim([0 5]);
+ylim([0 2000]);
+%xlim([0 10]);
 
 % Filtered NLMS signal
 subplot(5,1,4);
@@ -494,8 +494,8 @@ title('Filtered NLMS Signal');
 colorbar;
 colormap jet;
 caxis([cmin cmax]); % Set color axis
-ylim([0 1000]);
-xlim([0 5]);
+ylim([0 2000]);
+%xlim([0 10]);
 
 % Filtered RLS signal
 subplot(5,1,5);
@@ -507,8 +507,8 @@ title('Filtered RLS Signal');
 colorbar;
 colormap jet;
 caxis([cmin cmax]); % Set color axis
-ylim([0 1000]);
-xlim([0 5]);
+ylim([0 2000]);
+%xlim([0 10]);
 
 % Set figure size and position
 set(gcf, 'Units', 'inches', 'Position', [0, 0, 8.266666666666666, 9.866666666666667]);
@@ -567,14 +567,122 @@ xlim([0 length(u)]);
 tightfig();
 saveas(gcf, fullfile(foldername, ['Error signals - ' suffix '.pdf']));
 
+% %% Frequency Response of Final Weights
+% n_fft = 257;  % Number of FFT points
+% x_range = linspace(0, fs/2, n_fft);  % Frequency axis from 0 to fs/2
+% 
+% figure;
+% 
+% % LMS
+% subplot(3, 1, 1);
+% w_LMS_final = w_hist_LMS(:, end);
+% fr_LMS = 20 * log10(abs(freqz(w_LMS_final, 1, n_fft)));
+% plot(x_range, fr_LMS);
+% xlabel('Frequency (Hz)');
+% ylabel('Magnitude (dB)');
+% title('Frequency Response of LMS Filter');
+% grid on;
+% 
+% % NLMS
+% subplot(3, 1, 2);
+% w_NLMS_final = w_hist_NLMS(:, end);
+% fr_NLMS = 20 * log10(abs(freqz(w_NLMS_final, 1, n_fft)));
+% plot(x_range, fr_NLMS);
+% xlabel('Frequency (Hz)');
+% ylabel('Magnitude (dB)');
+% title('Frequency Response of NLMS Filter');
+% grid on;
+% 
+% % RLS
+% subplot(3, 1, 3);
+% w_RLS_final = w_hist_RLS(:, end);
+% fr_RLS = 20 * log10(abs(freqz(w_RLS_final, 1, n_fft)));
+% plot(x_range, fr_RLS);
+% xlabel('Frequency (Hz)');
+% ylabel('Magnitude (dB)');
+% title('Frequency Response of RLS Filter');
+% grid on;
+% 
+% set(gcf, 'Units', 'inches', 'Position', [9.433333333333334,2.383333333333333,5.033333333333333,8.358333333333333]);
+% 
+% % Save figure
+% tightfig();
+% saveas(gcf, fullfile(foldername, ['Frequency Response of Final Weights - ' suffix '.pdf']));
+
+% %% Create Learning curve
+% 
+% R = 100; % Number of runs for ensemble average
+% N_plot = 1000; % Number of samples for MSE plotting
+% mse_LMS_avg = zeros(N_plot, 1);  % To store average MSE for LMS
+% mse_NLMS_avg = zeros(N_plot, 1); % To store average MSE for NLMS
+% mse_RLS_avg = zeros(N_plot, 1);  % To store average MSE for RLS
+% 
+% for r = 1:R
+%     % Run the filters
+%     [y_LMS] = lms_filter(u, d, bestFilterOrder_LMS, bestMu_LMS);
+%     [y_NLMS] = nlms_filter(u, d, bestFilterOrder_NLMS, bestMu_NLMS);
+%     [y_RLS] = rls_filter(u, d, bestFilterOrder_RLS, bestLambda_RLS);
+% 
+%     % Calculate MSE (Mean Squared Error) at each iteration for each filter
+%     mse_LMS = (u(1:N_plot)-y_LMS(1:N_plot)).^2;  % Squared error for LMS
+%     mse_NLMS = (u(1:N_plot)-y_NLMS(1:N_plot)).^2;  % Squared error for NLMS
+%     mse_RLS = (u(1:N_plot)-y_RLS(1:N_plot)).^2;  % Squared error for RLS
+% 
+%     % Accumulate MSE values for averaging
+%     mse_LMS_avg = mse_LMS_avg + mse_LMS;
+%     mse_NLMS_avg = mse_NLMS_avg + mse_NLMS;
+%     mse_RLS_avg = mse_RLS_avg + mse_RLS;
+% end
+% 
+% % Average MSE over all runs
+% mse_LMS_avg = mse_LMS_avg / R;
+% mse_NLMS_avg = mse_NLMS_avg / R;
+% mse_RLS_avg = mse_RLS_avg / R;
+% 
+% %% Plot Learning Curve in 3 Subplots
+% figure; set(gcf, 'Color', 'w');
+% 
+% % LMS Learning Curve
+% subplot(3, 1, 1);  % Create subplot 1
+% plot(mse_LMS_avg, 'Color', [0.8500 0.3250 0.0980], 'LineWidth', 1.2);
+% xlabel('Iterations');  % Label as iterations since we're tracking filter updates
+% ylabel('Avg MSE');
+% legend('LMS', 'Location', 'northeast');
+% %axis([0 1000 0 0.5])
+% grid on;
+% 
+% % NLMS Learning Curve
+% subplot(3, 1, 2);  % Create subplot 2
+% plot(mse_NLMS_avg, 'Color', [0 0.4470 0.7410], 'LineWidth', 1.2);
+% xlabel('Iterations');  % Label as iterations
+% ylabel('Avg MSE');
+% legend('NLMS', 'Location', 'northeast');
+% %axis([0 1000 0 0.5])
+% grid on;
+% 
+% % RLS Learning Curve
+% subplot(3, 1, 3);  % Create subplot 3
+% plot(mse_RLS_avg, 'Color', [0.4940 0.1840 0.5560], 'LineWidth', 1.2);
+% xlabel('Iterations');  % Label as iterations
+% ylabel('Avg MSE');
+% legend('RLS', 'Location', 'northeast');
+% %axis([0 1000 0 0.5])
+% grid on;
+% 
+% % Adjust layout
+% tightfig();  % Ensure tight layout
+% 
+% % Save the learning curve plot
+% saveas(gcf, fullfile(foldername, ['Learning Curve - ' suffix '.pdf']));
+
 %% Error convergence curve comparison with smoothing
 
 [y_LMS, e_LMS, w_hist_LMS] = lms_filter(u, d, bestFilterOrder_LMS, bestMu_LMS);
 [y_NLMS, e_NLMS, w_hist_NLMS] = nlms_filter(u, d, bestFilterOrder_NLMS, bestMu_NLMS);
 [y_RLS, e_RLS, w_hist_RLS] = rls_filter(u, d, bestFilterOrder_RLS, bestLambda_RLS);
 
-N_plot = 2000; % Plotting only a portion
-smooth_window = 50; % Moving average window size try 50, 200, 500
+N_plot = 5000; % Plotting only a portion
+smooth_window = 100; % Moving average window size try 50, 200, 500
 
 
 % Calculate instantaneous squared error 

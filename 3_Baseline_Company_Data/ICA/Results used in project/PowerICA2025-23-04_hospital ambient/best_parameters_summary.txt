@@ -1,5 +1,0 @@
-The PowerICA estimate of A is 
- 0.2972 
- 0.2960 
- 0.0428 
- 0.0854 

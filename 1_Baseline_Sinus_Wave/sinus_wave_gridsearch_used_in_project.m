@@ -6,22 +6,12 @@ close all;
 fs = 8000; % Sampling frequency
 duration = 6; % seconds
 t = 0:1/fs:duration;
-x = sin(2 * pi * 10 * t)';   % Original signal     Clean 
+x = sin(2 * pi * 10 * t)';   % Original signal     Clean z½
 d = 0.5 * randn(size(t))';   % Secondary   (refence)
 u = x + d;                   % Primary     (input)
 
-% [e1,y1,w1] = myNLMS(input, noise, M, mu);
-
 % Name of audio type to have in figures and folder name
 suffix = 'Sinus_Wave';
-
-%% Bandpass Filtering to Remove Distortions
-lowCutoff = 5; % Low cut frequency in Hz
-highCutoff = 800; % High cut frequency in Hz
-[b, a] = butter(4, [lowCutoff, highCutoff] / (fs/2), 'bandpass');
-u = filtfilt(b, a, u);
-d = filtfilt(b, a, d);
-x = filtfilt(b, a, x);
 
 % Calculate initial SNR
 initial_SNR = 10 * log10(sum(x.^2) / sum((x - d).^2));  % The same as 10 * log10(sum(x.^2) / sum((x - d).^2))
@@ -30,9 +20,9 @@ initial_MSE = mean((x - d).^2);
 
 %% Parameters
 mu_values_LMS = [0.0001 0.001 0.002 0.005 0.0075 0.01 0.015 0.02 0.025 0.03 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9];
-mu_values_NLMS = [0.00001  0.00005  0.00010  0.00020  0.00050  0.00075  0.001 0.002 0.005 0.0075 0.01 0.02 0.03 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9];
+mu_values_NLMS = [0.0001 0.001 0.002 0.005 0.0075 0.01 0.015 0.02 0.025 0.03 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9];
 lambda_values = [0.92 0.95 0.97 0.98 0.985 0.99 0.995 0.998 0.9985 0.999 0.9992 0.9995 0.9997 0.9999];
-filter_length = [3 4 5 6 8 10 12 16 24 32 40 60 80 100]; 
+filter_length = [1 2 3 4 5 6 8 10 12 16 24 32 40 60 80 100]; 
 
 totalIterations = length(filter_length) * (length(mu_values_LMS) + length(mu_values_NLMS)) + ...
                   length(filter_length) * length(lambda_values);
@@ -366,9 +356,9 @@ saveas(gcf, fullfile(foldername, ['Output SNR vs Filter Length - ' suffix '.pdf'
 %% Plot Mel Spectrogram for LMS, NLMS, and RLS in one figure
 
 windowLength = round(0.14*fs);  % 140 ms window length
-hop_size = round(0.02*fs);      % 20 ms hop size
+hop_size = round(0.01*fs);      % 10 ms hop size
 overlap = windowLength - hop_size; 
-numBands = 128;                 % Number of Mel bands
+numBands = 256;                 % Number of Mel bands
 hannWin = hann(windowLength, 'periodic'); 
 
 % Compute Mel spectrogram for clean signal
@@ -415,6 +405,10 @@ s_filtered_NLMS_db = 10 * log10(s_filtered_NLMS + eps);
 
 s_filtered_RLS_db = 10 * log10(s_filtered_RLS + eps);
 
+% Find global min and max for color axis
+cmin = -50;
+cmax = max([max(s_x_db(:)), max(s_u_db(:)), max(s_filtered_LMS_db(:)), max(s_filtered_NLMS_db(:)), max(s_filtered_RLS_db(:))]);
+
 % Plot Mel spectrograms in a single figure (5 subplots)
 figure;
 
@@ -427,7 +421,8 @@ ylabel('Frequency (Hz)');
 title('Clean Signal');
 colorbar;
 colormap jet;
-ylim([0 4000]);
+caxis([cmin cmax]); % Set color axis
+ylim([0 1000]);
 xlim([0 5]);
 
 % Primary signal (heart+noise)
@@ -439,7 +434,8 @@ ylabel('Frequency (Hz)');
 title('Primary Signal (Clean + Noise)');
 colorbar;
 colormap jet;
-ylim([0 4000]);
+caxis([cmin cmax]); % Set color axis
+ylim([0 1000]);
 xlim([0 5]);
 
 % Filtered LMS signal
@@ -451,7 +447,8 @@ ylabel('Frequency (Hz)');
 title('Filtered LMS Signal');
 colorbar;
 colormap jet;
-ylim([0 4000]);
+caxis([cmin cmax]); % Set color axis
+ylim([0 1000]);
 xlim([0 5]);
 
 % Filtered NLMS signal
@@ -463,7 +460,8 @@ ylabel('Frequency (Hz)');
 title('Filtered NLMS Signal');
 colorbar;
 colormap jet;
-ylim([0 4000]);
+caxis([cmin cmax]); % Set color axis
+ylim([0 1000]);
 xlim([0 5]);
 
 % Filtered RLS signal
@@ -475,7 +473,8 @@ ylabel('Frequency (Hz)');
 title('Filtered RLS Signal');
 colorbar;
 colormap jet;
-ylim([0 4000]);
+caxis([cmin cmax]); % Set color axis
+ylim([0 1000]);
 xlim([0 5]);
 
 % Set figure size and position
@@ -534,48 +533,6 @@ xlim([0 length(u)/3]);
 % Save figure
 tightfig();
 saveas(gcf, fullfile(foldername, ['Error signals - ' suffix '.pdf']));
-
-%% Frequency Response of Final Weights
-n_fft = 257;  % Number of FFT points
-x_range = linspace(0, fs/2, n_fft);  % Frequency axis from 0 to fs/2
-
-figure;
-
-% LMS
-subplot(3, 1, 1);
-w_LMS_final = w_hist_LMS(:, end);
-fr_LMS = 20 * log10(abs(freqz(w_LMS_final, 1, n_fft)));
-plot(x_range, fr_LMS);
-xlabel('Frequency (Hz)');
-ylabel('Magnitude (dB)');
-title('Frequency Response of LMS Filter');
-grid on;
-
-% NLMS
-subplot(3, 1, 2);
-w_NLMS_final = w_hist_NLMS(:, end);
-fr_NLMS = 20 * log10(abs(freqz(w_NLMS_final, 1, n_fft)));
-plot(x_range, fr_NLMS);
-xlabel('Frequency (Hz)');
-ylabel('Magnitude (dB)');
-title('Frequency Response of NLMS Filter');
-grid on;
-
-% RLS
-subplot(3, 1, 3);
-w_RLS_final = w_hist_RLS(:, end);
-fr_RLS = 20 * log10(abs(freqz(w_RLS_final, 1, n_fft)));
-plot(x_range, fr_RLS);
-xlabel('Frequency (Hz)');
-ylabel('Magnitude (dB)');
-title('Frequency Response of RLS Filter');
-grid on;
-
-set(gcf, 'Units', 'inches', 'Position', [9.433333333333334,2.383333333333333,5.033333333333333,8.358333333333333]);
-
-% Save figure
-tightfig();
-saveas(gcf, fullfile(foldername, ['Frequency Response of Final Weights - ' suffix '.pdf']));
 
 % %% Create Learning curve
 % 
@@ -701,6 +658,48 @@ tightfig();  % Ensure tight layout
 % Save the learning curve plot
 saveas(gcf, fullfile(foldername, ['Error convergence curve - ' suffix '.pdf']));
 
+% %% Frequency Response of Final Weights
+% n_fft = 257;  % Number of FFT points
+% x_range = linspace(0, fs/2, n_fft);  % Frequency axis from 0 to fs/2
+% 
+% figure;
+% 
+% % LMS
+% subplot(3, 1, 1);
+% w_LMS_final = w_hist_LMS(:, end);
+% fr_LMS = 20 * log10(abs(freqz(w_LMS_final, 1, n_fft)));
+% plot(x_range, fr_LMS);
+% xlabel('Frequency (Hz)');
+% ylabel('Magnitude (dB)');
+% title('Frequency Response of LMS Filter');
+% grid on;
+% 
+% % NLMS
+% subplot(3, 1, 2);
+% w_NLMS_final = w_hist_NLMS(:, end);
+% fr_NLMS = 20 * log10(abs(freqz(w_NLMS_final, 1, n_fft)));
+% plot(x_range, fr_NLMS);
+% xlabel('Frequency (Hz)');
+% ylabel('Magnitude (dB)');
+% title('Frequency Response of NLMS Filter');
+% grid on;
+% 
+% % RLS
+% subplot(3, 1, 3);
+% w_RLS_final = w_hist_RLS(:, end);
+% fr_RLS = 20 * log10(abs(freqz(w_RLS_final, 1, n_fft)));
+% plot(x_range, fr_RLS);
+% xlabel('Frequency (Hz)');
+% ylabel('Magnitude (dB)');
+% title('Frequency Response of RLS Filter');
+% grid on;
+% 
+% set(gcf, 'Units', 'inches', 'Position', [9.433333333333334,2.383333333333333,5.033333333333333,8.358333333333333]);
+% 
+% % Save figure
+% tightfig();
+% saveas(gcf, fullfile(foldername, ['Frequency Response of Final Weights - ' suffix '.pdf']));
+
 %% LMS Filter Function
 function [y, e, w_hist] = lms_filter(primary, secondary, M, mu)
     N = length(primary);
@@ -716,7 +715,7 @@ function [y, e, w_hist] = lms_filter(primary, secondary, M, mu)
         e(n) = primary(n) - y(n); % Error signal
         w = w + mu * e(n) * u_vec; % Update weights
 
-        w_hist(:, n) = w;
+        %w_hist(:, n) = w;
     end
 end
 
@@ -737,7 +736,7 @@ function [y, e, w_hist] = nlms_filter(primary, secondary, M, mu)
         e(n) = primary(n) - y(n); % Error signal
         w = w + mu1 * e(n) * u_vec; % Update weights
 
-        w_hist(:, n) = w;
+        %w_hist(:, n) = w;
     end
 end
 
@@ -761,7 +760,7 @@ function [y, e, w_hist] = rls_filter(primary, secondary, M, lambda)
         w = w + k * e(n); % Update weights
         P = (P - k * u_vec' * P) / lambda; % Update inverse correlation matrix
 
-        w_hist(:, n) = w;
+        %w_hist(:, n) = w;
     end
 end
 

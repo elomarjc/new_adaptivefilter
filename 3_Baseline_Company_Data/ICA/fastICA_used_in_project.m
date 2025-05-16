@@ -4,28 +4,49 @@ close all;
 clc;
 
 %% Load the primary and secondary signals (noise and reference)
-[u, fs] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\3_Baseline_Company_Data\ICA\Experiment_Data_vs2 - ICA\Hospital Ambient Noises\NHS\1\primary.wav");
-[d, ~] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\3_Baseline_Company_Data\ICA\Experiment_Data_vs2 - ICA\Hospital Ambient Noises\NHS\1\secondary.wav");
-[x, ~] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\3_Baseline_Company_Data\ICA\Experiment_Data_vs2 - ICA\Hospital Ambient Noises\NHS\1\ZCH0019.wav");
+% [u, fs] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\3_Baseline_Company_Data\ICA\Experiment_Data_vs2 - ICA\Artifacts\NHS\2\primary.wav");
+% [d, ~] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\3_Baseline_Company_Data\ICA\Experiment_Data_vs2 - ICA\Artifacts\NHS\2\secondary.wav");
+% [x, ~] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\3_Baseline_Company_Data\ICA\Experiment_Data_vs2 - ICA\Artifacts\NHS\2\ZCH0066.wav");
+
+[u, fs] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\4_Baseline_My_Own_Experiment\ICA - Matlab\NHS data - ICA - Jacob\ambient noise\Primary.wav");
+[d, ~] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\4_Baseline_My_Own_Experiment\ICA - Matlab\NHS data - ICA - Jacob\ambient noise\Secondary.wav");
+[x, ~] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\4_Baseline_My_Own_Experiment\ICA - Matlab\NHS data - ICA - Jacob\ambient noise\Clean.wav");
 
 % Clean signal is not needed for ICA, its just for visual comparison. 
 
-suffix = 'Hospital Ambient Noises';
+suffix = 'ambient noise';
+
+% Define the duration of the segment to extract (x seconds)
+segment_duration = 6;  % in seconds
+segment_samples = segment_duration * fs;  % Convert duration to sample count
+
+% Ensure that the recordings are long enough and extract the first x seconds from each
+if length(u) >= segment_samples
+    u = u(1:segment_samples);  % Extract first x seconds
+else
+    error('Primary signal is shorter than x seconds.');
+end
+
+if length(d) >= segment_samples
+    d = d(1:segment_samples);  % Extract first x seconds
+else
+    error('Secondary signal is shorter than 6 seconds.');
+end
+
+if length(x) >= segment_samples
+    x = x(1:segment_samples);  % Extract first x seconds
+else
+    error('Clean signal is shorter than x seconds.');
+end
+
+% Ensure all signals are the same size by trimming to the smallest length
+min_len = min([length(u), length(d), length(x)]);
+u = u(1:min_len);
+d = d(1:min_len);
+x = x(1:min_len);
 
 %% Calculate initial SNR
 initial_SNR = 10 * log10(sum(x.^2) / sum((x - d).^2));  % The same as 10 * log10(sum(x.^2) / sum((x - d).^2))
-
-%% Define start time for trimming (x seconds)
-start_time = 1.7;  % in seconds
-start_sample = round(start_time * fs);  % Convert time to sample index
-
-% Trim the signals to start from x seconds
-u = u(start_sample:end);
-d = d(start_sample:end);
-x = x(start_sample:end);
-
-% Find the minimum length
-minLength = min([length(u), length(d), length(x)]);
 
 %Normalize
 x = x / max(abs(x));
@@ -34,7 +55,7 @@ d = d / max(abs(d));
 
 %%
 % Run FastICA
-[S_est, W, A] = fastICA_heartbeat(u, d, 2);
+[S_est, W, A] = fastICA(u, d, 2);
 
 t = (0:length(u)-1)/fs;  % Assuming you have sampling frequency fs
 
@@ -75,6 +96,9 @@ fprintf('Initial SNR (before ICA): %.2f dB\n', initial_SNR);
 fprintf('Post SNR (after ICA) for Separated Signal 1: %.2f dB\n', SNR_post_S1);
 fprintf('Post SNR (after ICA) for Separated Signal 2: %.2f dB\n', SNR_post_S2);
 
+fprintf('SNR improvement Separated Signal 1: %.2f dB\n', SNR_post_S1-initial_SNR);
+fprintf('SNR improvement Separated Signal 2: %.2f dB\n', SNR_post_S2-initial_SNR);
+
 % Define result text file path (same folder as saved .mat)
 results_txt_path = fullfile(foldername, 'SNR-results.txt');
 
@@ -90,9 +114,11 @@ fprintf(fid, 'Initial SNR (before ICA): %.2f dB\n', initial_SNR);
 fprintf(fid, 'Post SNR (after ICA) for Separated Signal 1: %.2f dB\n', SNR_post_S1);
 fprintf(fid, 'Post SNR (after ICA) for Separated Signal 2: %.2f dB\n', SNR_post_S2);
 
+fprintf(fid, 'SNR improvement Separated Signal 1: %.2f dB\n', SNR_post_S1-initial_SNR);
+fprintf(fid, 'SNR improvement Separated Signal 2: %.2f dB\n', SNR_post_S2-initial_SNR);
+
 % Close file
 fclose(fid);
-
 
 %% Mel Spectrogram Visualization (for FastICA)
 windowLength = round(0.14 * fs);  % 140 ms
@@ -139,10 +165,11 @@ s_S2_db = 10 * log10(s_S2 + eps);
 t = t - t(1);  % Reset time axis
 
 % Find global min and max for color axis
-cmin = -50;
+cmin = -60;
 cmax = max([max(s_x_db(:)), max(s_u_db(:)),max(s_d_db(:)), max(s_S1_db(:)), max(s_S2_db(:))]);
 
 ymax = 2000;
+xmax = 5;
 
 figure;
 subplot(5,1,1);
@@ -153,49 +180,49 @@ ylabel('Frequency (Hz)');
 title('Clean Signal'); 
 colorbar; ylim([0 ymax]); 
 caxis([cmin cmax]); % Set color axis
-xlim([0 5]);
+xlim([0 xmax]);
 
 subplot(5,1,2);
 imagesc(t, f, s_u_db); 
 axis xy;
 xlabel('Time (s)'); 
-ylabel('Hz'); 
+ylabel('Frequency (Hz)'); 
 title('Noisy Signal 1 (Clean + Noise)'); 
 colorbar; ylim([0 ymax]); 
 caxis([cmin cmax]); % Set color axis
-xlim([0 5]);
+xlim([0 xmax]);
 
 subplot(5,1,3);
 imagesc(t, f, s_u_db); 
 axis xy;
 xlabel('Time (s)'); 
-ylabel('Hz'); 
+ylabel('Frequency (Hz)'); 
 title('Noisy Signal 2 (Clean + Noise)'); 
 colorbar; ylim([0 ymax]); 
 caxis([cmin cmax]); % Set color axis
-xlim([0 5]);
+xlim([0 xmax]);
 
 subplot(5,1,4);
 imagesc(t, f, s_S1_db); 
 axis xy;
 xlabel('Time (s)'); 
-ylabel('Hz'); 
+ylabel('Frequency (Hz)'); 
 title('Separated Signal 1'); 
 colorbar; 
 ylim([0 ymax]); 
 caxis([cmin cmax]); % Set color axis
-xlim([0 5]);
+xlim([0 xmax]);
 
 subplot(5,1,5);
 imagesc(t, f, s_S2_db); 
 axis xy;
 xlabel('Time (s)'); 
-ylabel('Hz'); 
+ylabel('Frequency (Hz)'); 
 title('Separated Signal 2'); 
 colorbar; 
 ylim([0 ymax]); 
 caxis([cmin cmax]); % Set color axis
-xlim([0 5]);
+xlim([0 xmax]);
 
 % Set figure size and export
 set(gcf, 'Units', 'inches', 'Position', [0, 0, 8.27, 9.8]);
@@ -212,26 +239,28 @@ plot(x); title('Clean Signal'); xlabel('Sample'); ylabel('Amplitude');
 xlim([0 minLength]); ylim([-1 1]);
 
 subplot(5,1,2);
-plot(u); title('Input 1'); xlabel('Sample'); ylabel('Amplitude');
+plot(u); title('Noisy Signal 1'); xlabel('Sample'); ylabel('Amplitude');
 xlim([0 minLength]); ylim([-1 1]);
 
 subplot(5,1,3);
-plot(d); title('Input 2'); xlabel('Sample'); ylabel('Amplitude');
+plot(d); title('Noisy Signal 2'); xlabel('Sample'); ylabel('Amplitude');
 xlim([0 minLength]); ylim([-1 1]);
 
 subplot(5,1,4);
-plot(x-S1); title('Error Signal of Separated Signal 1'); xlabel('Sample'); ylabel('Error');
+plot(x-S1); title('Error Signal (Separated Signal 1)'); xlabel('Sample'); ylabel('Amplitude');
 xlim([0 minLength]); ylim([-1 1]);
 
 subplot(5,1,5);
-plot(x-S2); title('Error Signal of Separated Signal 2'); xlabel('Sample'); ylabel('Error');
+plot(x-S2); title('Error Signal (Separated Signal 2)'); xlabel('Sample'); ylabel('Amplitude');
 xlim([0 minLength]); ylim([-1 1]);
 
 tightfig();
-saveas(gcf, fullfile(foldername, ['FastICA Separation Results - ' suffix '.pdf']));
+saveas(gcf, fullfile(foldername, ['Error Signal - FastICA - ' suffix '.pdf']));
 
-function [S_est, W, A_whitened] = fastICA_heartbeat(u, d, num_components)
-% fastICA_heartbeat - Separate heartbeat signal from noise using FastICA.
+%% Functions
+
+function [S_est, W, A_whitened] = fastICA(u, d, num_components)
+% fastICA - Separate  signal from noise using FastICA.
 % 
 % Inputs:
 %   u, d - Mixed signals (each a 1D vector, same length)

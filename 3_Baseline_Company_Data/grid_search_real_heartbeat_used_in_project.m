@@ -3,9 +3,18 @@ clear;
 close all;
 
 %% Define the path for the data
-[u, fs] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\3_Baseline_Company_Data\Data_ANC\Experiment_Data\Artifacts\NHS\1\primary.wav");   %noise + clean signal
-[d, ~] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\3_Baseline_Company_Data\Data_ANC\Experiment_Data\Artifacts\NHS\1\secondary.wav");
-[x, ~] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\3_Baseline_Company_Data\Data_ANC\Experiment_Data\Artifacts\NHS\1\ZCH0048.wav");
+% [u, fs] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\3_Baseline_Company_Data\Data_ANC\Experiment_Data\Artifacts\NHS\1\primary.wav");   %noise + clean signal
+% [d, ~] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\3_Baseline_Company_Data\Data_ANC\Experiment_Data\Artifacts\NHS\1\secondary.wav");
+% [x, ~] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\3_Baseline_Company_Data\Data_ANC\Experiment_Data\Artifacts\NHS\1\ZCH0048.wav");
+
+% reduce 48khz to 16 khz, use more second for duration of segment because
+% melspectrogram looks bad
+
+[u, fs] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\4_Baseline_My_Own_Experiment\NHS New Data - AdaptiveFilter\Speech\Primary.wav");   %noise + clean signal
+[d, ~] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\4_Baseline_My_Own_Experiment\NHS New Data - AdaptiveFilter\Speech\Secondary.wav");
+[x, ~] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\4_Baseline_My_Own_Experiment\NHS New Data - AdaptiveFilter\Speech\Clean.wav");
+
+%x = u-d;
 
 % Amplify for visibility, used for ambulance and lung sounds
  % u = u*3;
@@ -13,7 +22,7 @@ close all;
  % x = x*3;
 
 % Name of audio type to have in figures and folder name
-suffix = 'Artifacts';
+suffix = 'Speech-Jacob';
 
 % Define the duration of the segment to extract (x seconds)
 segment_duration = 6;  % in seconds
@@ -35,7 +44,7 @@ end
 if length(x) >= segment_samples
     x = x(1:segment_samples);  % Extract first x seconds
 else
-    error('Artifact signal is shorter than x seconds.');
+    error('Clean signal is shorter than x seconds.');
 end
 
 % Ensure all signals are the same size by trimming to the smallest length
@@ -441,6 +450,7 @@ s_filtered_RLS_db = 10 * log10(s_filtered_RLS + eps);
 % Find global min and max for color axis
 cmin = -60;
 cmax = max([max(s_x_db(:)), max(s_u_db(:)), max(s_filtered_LMS_db(:)), max(s_filtered_NLMS_db(:)), max(s_filtered_RLS_db(:))]);
+ymax = 3000;
 
 % Plot Mel spectrograms in a single figure (5 subplots)
 figure;
@@ -455,7 +465,7 @@ title('Clean Signal');
 colorbar;
 colormap jet;
 caxis([cmin cmax]); % Set color axis
-ylim([0 1000]);
+ylim([0 ymax]);
 xlim([0 5]); % 5 for heart, 10 for lung
 
 % Primary signal (heart+noise)
@@ -468,7 +478,7 @@ title('Primary Signal (Clean + Noise)');
 colorbar;
 colormap jet;
 caxis([cmin cmax]); % Set color axis
-ylim([0 1000]);
+ylim([0 ymax]);
 xlim([0 5]);
 
 % Filtered LMS signal
@@ -481,7 +491,7 @@ title('Filtered LMS Signal');
 colorbar;
 colormap jet;
 caxis([cmin cmax]); % Set color axis
-ylim([0 1000]);
+ylim([0 ymax]);
 xlim([0 5]);
 
 % Filtered NLMS signal
@@ -494,7 +504,7 @@ title('Filtered NLMS Signal');
 colorbar;
 colormap jet;
 caxis([cmin cmax]); % Set color axis
-ylim([0 1000]);
+ylim([0 ymax]);
 xlim([0 5]);
 
 % Filtered RLS signal
@@ -507,7 +517,7 @@ title('Filtered RLS Signal');
 colorbar;
 colormap jet;
 caxis([cmin cmax]); % Set color axis
-ylim([0 1000]);
+ylim([0 ymax]);
 xlim([0 5]);
 
 % Set figure size and position

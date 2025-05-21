@@ -1,0 +1,38 @@
+--- Absolute Best Parameters ---
+Initial SNR: -9.2980 dB
+Initial MSE: 0.0239 dB
+Freq of recordings: 16000.0000 Hz
+
+LMS:
+Best SNR: 9.5512 dB
+Best MSE: 0.0026 dB
+SNR Improvment: 18.8492 dB
+MSE Improvment: 0.0213 
+Filter Length: 8
+Optimal mu: 0.3000
+
+NLMS:
+Best SNR: 12.5831 dB
+Best MSE: 0.0028 dB
+SNR Improvment: 21.8811 dB
+MSE Improvment: 0.0211 
+Filter Length: 8
+Optimal mu: 0.0300
+
+RLS:
+Best SNR: 36.4451 dB
+Best MSE: 0.0028 dB
+SNR Improvment: 45.7431 dB
+MSE Improvment: 0.0210 
+Filter Length: 8
+Optimal lambda: 0.9999
+
+---------------------------------
+Filter Length  Best SNR (LMS)           Optimal mu (LMS)         
+8              9.5512                   0.3000                   
+
+Filter Length  Best SNR (NLMS)          Optimal mu (NLMS)        
+8              12.5831                  0.0300                   
+
+Filter Length  Best SNR (RLS)           Optimal lambda (RLS)     
+8              36.4451                  0.9999                   

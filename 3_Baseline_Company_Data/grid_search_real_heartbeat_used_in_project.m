@@ -3,16 +3,13 @@ clear;
 close all;
 
 %% Define the path for the data
-% [u, fs] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\3_Baseline_Company_Data\Data_ANC\Experiment_Data\Artifacts\NHS\1\primary.wav");   %noise + clean signal
-% [d, ~] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\3_Baseline_Company_Data\Data_ANC\Experiment_Data\Artifacts\NHS\1\secondary.wav");
-% [x, ~] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\3_Baseline_Company_Data\Data_ANC\Experiment_Data\Artifacts\NHS\1\ZCH0048.wav");
+[u, fs] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\3_Baseline_Company_Data\Data_ANC\Experiment_Data\Ambulance&Traffic\NHS\1\primary.wav");   %noise + clean signal
+[d, ~] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\3_Baseline_Company_Data\Data_ANC\Experiment_Data\Ambulance&Traffic\NHS\1\secondary.wav");
+[x, ~] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\3_Baseline_Company_Data\Data_ANC\Experiment_Data\Ambulance&Traffic\NHS\1\ZCH0029.wav");
 
-% reduce 48khz to 16 khz, use more second for duration of segment because
-% melspectrogram looks bad
-
-[u, fs] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\4_Baseline_My_Own_Experiment\NHS New Data - AdaptiveFilter\Speech\Primary.wav");   %noise + clean signal
-[d, ~] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\4_Baseline_My_Own_Experiment\NHS New Data - AdaptiveFilter\Speech\Secondary.wav");
-[x, ~] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\4_Baseline_My_Own_Experiment\NHS New Data - AdaptiveFilter\Speech\Clean.wav");
+% [u, fs] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\4_Baseline_My_Own_Experiment\NHS New Data - AdaptiveFilter\Speech\Primary.wav");   %noise + clean signal
+% [d, ~] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\4_Baseline_My_Own_Experiment\NHS New Data - AdaptiveFilter\Speech\Secondary.wav");
+% [x, ~] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\4_Baseline_My_Own_Experiment\NHS New Data - AdaptiveFilter\Speech\Clean.wav");
 
 %x = u-d;
 
@@ -22,9 +19,18 @@ close all;
  % x = x*3;
 
 % Name of audio type to have in figures and folder name
-suffix = 'Speech-Jacob';
+suffix = 'Ambulance&Traffic - fixed param';
 
-% Define the duration of the segment to extract (x seconds)
+% %% Define start time for trimming (1.5 seconds)
+% start_time = 13;  % in seconds
+% start_sample = round(start_time * fs);  % Convert time to sample index
+
+% % Trim the signals to start from 1.5 seconds
+% u = u(start_sample:end);
+% d = d(start_sample:end);
+% x = x(start_sample:end);
+
+%% Define the duration of the segment to extract (x seconds)
 segment_duration = 6;  % in seconds
 segment_samples = segment_duration * fs;  % Convert duration to sample count
 
@@ -53,16 +59,26 @@ u = u(1:min_len);
 d = d(1:min_len);
 x = x(1:min_len);
 
+% %Normalize  - RUINS RESULTS CHECK SEE IF IT GETS WORSE WITH THIS ON
+% x = x / max(abs(x));
+% u = u / max(abs(u));
+% d = d / max(abs(d));
+
 %% Calculate initial SNR
 initial_SNR = 10 * log10(sum(x.^2) / sum((x - d).^2));  % The same as 10 * log10(sum(x.^2) / sum((x - d).^2))
 
 initial_MSE = mean((x - d).^2);
 
 %% Parameters
-mu_values_LMS = [0.0001 0.001 0.002 0.005 0.0075 0.01 0.015 0.02 0.025 0.03 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9];
-mu_values_NLMS = [0.0001 0.001 0.002 0.005 0.0075 0.01 0.015 0.02 0.025 0.03 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9];
-lambda_values = [0.92 0.95 0.97 0.98 0.985 0.99 0.995 0.998 0.9985 0.999 0.9992 0.9995 0.9997 0.9999];
-filter_length = [1 2 3 4 5 6 8 10 12 16 24 32 40 60 80 100]; 
+% mu_values_LMS = [0.0001 0.001 0.002 0.005 0.0075 0.01 0.015 0.02 0.025 0.03 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9];
+% mu_values_NLMS = [0.0001 0.001 0.002 0.005 0.0075 0.01 0.015 0.02 0.025 0.03 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9];
+% lambda_values = [0.92 0.95 0.97 0.98 0.985 0.99 0.995 0.998 0.9985 0.999 0.9992 0.9995 0.9997 0.9999];
+% filter_length = [1 2 3 4 5 6 8 10 12 16 24 32 40 60 80 100]; 
+
+mu_values_LMS = [0.3];
+mu_values_NLMS = [0.03];
+lambda_values = [0.9999];
+filter_length = [8]; 
 
 totalIterations = length(filter_length) * (length(mu_values_LMS) + length(mu_values_NLMS)) + ...
                   length(filter_length) * length(lambda_values);
@@ -393,7 +409,7 @@ legend('Location','best');
 
 % Save figure
 tightfig();
-saveas(gcf, fullfile(foldername, ['Output SNR vs Filter Length - ' suffix '.pdf']));
+%saveas(gcf, fullfile(foldername, ['Output SNR vs Filter Length - ' suffix '.pdf']));
 
 %% Plot Mel Spectrogram for LMS, NLMS, and RLS in one figure
 
@@ -450,7 +466,7 @@ s_filtered_RLS_db = 10 * log10(s_filtered_RLS + eps);
 % Find global min and max for color axis
 cmin = -60;
 cmax = max([max(s_x_db(:)), max(s_u_db(:)), max(s_filtered_LMS_db(:)), max(s_filtered_NLMS_db(:)), max(s_filtered_RLS_db(:))]);
-ymax = 3000;
+ymax = 2000;
 
 % Plot Mel spectrograms in a single figure (5 subplots)
 figure;
@@ -598,7 +614,7 @@ mse_curve_NLMS_smooth = movmean(mse_inst_NLMS, smooth_window);
 mse_curve_RLS_smooth = movmean(mse_inst_RLS, smooth_window);
 
 % Find the maximum MSE across all filters (with margin for aesthetics)
-max_mse = max([max(mse_curve_LMS_smooth), max(mse_curve_NLMS_smooth), max(mse_curve_RLS_smooth)]);
+max_mse = (max([max(mse_curve_LMS_smooth), max(mse_curve_NLMS_smooth), max(mse_curve_RLS_smooth)])+0.01);
 
 % Plot Learning Curve in 3 Subplots
 figure; set(gcf, 'Color', 'w');

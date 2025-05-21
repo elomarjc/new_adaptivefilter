@@ -4,40 +4,40 @@ close all;
 clc;
 
 %% Load the primary and secondary signals (noise and reference)
-% [u, fs] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\3_Baseline_Company_Data\ICA\Experiment_Data_vs2 - ICA\Artifacts\NHS\2\primary.wav");
-% [d, ~] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\3_Baseline_Company_Data\ICA\Experiment_Data_vs2 - ICA\Artifacts\NHS\2\secondary.wav");
-% [x, ~] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\3_Baseline_Company_Data\ICA\Experiment_Data_vs2 - ICA\Artifacts\NHS\2\ZCH0066.wav");
+[u, fs] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\3_Baseline_Company_Data\ICA\Experiment_Data_vs2 - ICA\Hospital Ambient Noises\NLS\1\primary.wav");
+[d, ~] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\3_Baseline_Company_Data\ICA\Experiment_Data_vs2 - ICA\Hospital Ambient Noises\NLS\1\secondary.wav");
+[x, ~] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\3_Baseline_Company_Data\ICA\Experiment_Data_vs2 - ICA\Hospital Ambient Noises\NLS\1\steth_20190608_11_58_04_ok.wav");
 
-[u, fs] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\4_Baseline_My_Own_Experiment\ICA - Matlab\NHS data - ICA - Jacob\ambient noise\Primary.wav");
-[d, ~] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\4_Baseline_My_Own_Experiment\ICA - Matlab\NHS data - ICA - Jacob\ambient noise\Secondary.wav");
-[x, ~] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\4_Baseline_My_Own_Experiment\ICA - Matlab\NHS data - ICA - Jacob\ambient noise\Clean.wav");
+% [u, fs] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\4_Baseline_My_Own_Experiment\ICA - Matlab\NHS data - ICA - Jacob\ambient noise\Primary.wav");
+% [d, ~] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\4_Baseline_My_Own_Experiment\ICA - Matlab\NHS data - ICA - Jacob\ambient noise\Secondary.wav");
+% [x, ~] = audioread("C:\Users\eloma\Desktop\new_adaptivefilter\4_Baseline_My_Own_Experiment\ICA - Matlab\NHS data - ICA - Jacob\ambient noise\Clean.wav");
 
 % Clean signal is not needed for ICA, its just for visual comparison. 
 
-suffix = 'ambient noise';
+suffix = 'Lung Hospital Ambient Noises';
 
-% Define the duration of the segment to extract (x seconds)
-segment_duration = 6;  % in seconds
-segment_samples = segment_duration * fs;  % Convert duration to sample count
-
-% Ensure that the recordings are long enough and extract the first x seconds from each
-if length(u) >= segment_samples
-    u = u(1:segment_samples);  % Extract first x seconds
-else
-    error('Primary signal is shorter than x seconds.');
-end
-
-if length(d) >= segment_samples
-    d = d(1:segment_samples);  % Extract first x seconds
-else
-    error('Secondary signal is shorter than 6 seconds.');
-end
-
-if length(x) >= segment_samples
-    x = x(1:segment_samples);  % Extract first x seconds
-else
-    error('Clean signal is shorter than x seconds.');
-end
+% % Define the duration of the segment to extract (x seconds)
+% segment_duration = 6;  % in seconds
+% segment_samples = segment_duration * fs;  % Convert duration to sample count
+% 
+% % Ensure that the recordings are long enough and extract the first x seconds from each
+% if length(u) >= segment_samples
+%     u = u(1:segment_samples);  % Extract first x seconds
+% else
+%     error('Primary signal is shorter than x seconds.');
+% end
+% 
+% if length(d) >= segment_samples
+%     d = d(1:segment_samples);  % Extract first x seconds
+% else
+%     error('Secondary signal is shorter than 6 seconds.');
+% end
+% 
+% if length(x) >= segment_samples
+%     x = x(1:segment_samples);  % Extract first x seconds
+% else
+%     error('Clean signal is shorter than x seconds.');
+% end
 
 % Ensure all signals are the same size by trimming to the smallest length
 min_len = min([length(u), length(d), length(x)]);
@@ -165,11 +165,11 @@ s_S2_db = 10 * log10(s_S2 + eps);
 t = t - t(1);  % Reset time axis
 
 % Find global min and max for color axis
-cmin = -60;
+cmin = -40;
 cmax = max([max(s_x_db(:)), max(s_u_db(:)),max(s_d_db(:)), max(s_S1_db(:)), max(s_S2_db(:))]);
 
-ymax = 2000;
-xmax = 5;
+ymax = 3000;
+xmax = 15-1;
 
 figure;
 subplot(5,1,1);

@@ -1,0 +1,5 @@
+Initial SNR (before ICA): 7.16 dB
+Post SNR (after ICA) for Separated Signal 1: 45.46 dB
+Post SNR (after ICA) for Separated Signal 2: -4.29 dB
+SNR improvement Separated Signal 1: 38.30 dB
+SNR improvement Separated Signal 2: -11.44 dB
